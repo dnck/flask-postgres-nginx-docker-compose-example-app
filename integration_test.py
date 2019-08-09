@@ -1,5 +1,5 @@
 import requests
-
+import datetime
 
 SERVICE_ENDPOINT = "http://localhost:5000/"
 ROUTE_ENDPOINT = "{}route/".format(SERVICE_ENDPOINT)
@@ -36,7 +36,7 @@ class TestRoute(object):
         assert 11750 < length["km"] < 11900
 
     def test_calculate_days_longest_route(self):
-        query_date = "09-08-2019"
+        query_date = datetime.datetime.today().strftime("%d-%m-%Y")
         response = requests.get(
             ROUTE_LONGEST_ROUTE_IN_DAY_ENDPOINT.format(query_date)
         )
