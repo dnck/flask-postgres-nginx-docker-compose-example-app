@@ -7,19 +7,28 @@ but loose enough that you will be able to show your own
 architectural solutions as well as your code structure.
 
 ### Hypothetical background
-The application is a small service, which accepts data from a GPS tracker device.
-In the beginning of a track, it requests a route to be created,
-then continuously populates it with data points (WGS84 coordinates).
-A route is expected to be done within a day, after that the user can't
-add more data points.
+The application is a small service.
+
+The service accepts data from a GPS tracker device.
+
+In the beginning of a track, the service requests a route to be created,
+then it continuously populates the route with data points (WGS84 coordinates).
+
+A route is expected to be done within a day.
+
+After a day, the user can not add more data points.
+
 Eventually a request to get the length of the route is made.
 
-There is also a second part which is to calculate
-the longest path for each day.
-This information is expected to be highly requested,
-and past days can't have new routes included, nor new points added to routes from past days.
-This the requests will only query days in the past (queries about the longest route
-in the present day will not be made, as the day is still going and new routes can be added).
+There is also a second part which is to calculate the longest path
+for each day.
+
+This information is expected to be highly requested, and past days can't have
+new routes included, nor new points added to routes from past days.
+
+The request will only query days in the past (queries about the longest route
+in the present day will not be made, as the day is still going and
+new routes can be added).
 
 ### Requirements
 We have provided you with an acceptance test. This acceptance test is
