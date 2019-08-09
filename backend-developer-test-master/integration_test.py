@@ -29,3 +29,8 @@ class TestRoute(object):
     def test_length_calculation(self):
         length = self.length_get.json()
         assert 11750 < length['km'] < 11900
+
+if __name__ == "__main__":
+    test = TestRoute()
+    test.setup()
+    test.test_length_calculation()
