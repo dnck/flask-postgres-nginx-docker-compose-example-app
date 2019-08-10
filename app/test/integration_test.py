@@ -8,9 +8,6 @@ ROUTE_LENGTH_ENDPOINT = "{}{}/length/".format(ROUTE_ENDPOINT, "{}")
 ROUTE_LONGEST_ROUTE_IN_DAY_ENDPOINT = "{}longest-route/{}".format(
     SERVICE_ENDPOINT, "{}"
 )
-# TODO Remove this when submitting
-# ROUTE_COLLECT_POINTS_ENDPOINT = "{}{}/points-in-path/".format(ROUTE_ENDPOINT, "{}")
-
 
 class TestRoute(object):
     wgs84_coordinates = [
@@ -47,10 +44,3 @@ class TestRoute(object):
         )
         query_result = response.json()
         assert query_date in query_result['date']
-
-    # TODO Remove this when submitting
-    # def test_get_points_in_path(self):
-    #     response = requests.get(
-    #         ROUTE_COLLECT_POINTS_ENDPOINT.format(22)
-    #     )
-    #     return response.json()
