@@ -16,7 +16,7 @@ then it continuously populates the route with data points (WGS84 coordinates).
 
 A route is expected to be done within a day.
 
-After a day, the user can not add more data points.
+After a day, the user can NOT add more data points.
 
 Eventually a request to get the length of the route is made.
 
