@@ -50,11 +50,3 @@ class TestRoute(object):
             ROUTE_COLLECT_POINTS_ENDPOINT.format(22)
         )
         print(response.json())
-
-
-if __name__ == "__main__":
-    test_route = TestRoute()
-    test_route.setup()
-    test_route.test_length_calculation()
-    test_route.test_calculate_longest_route_for_day()
-    test_route.test_get_points_in_path()
