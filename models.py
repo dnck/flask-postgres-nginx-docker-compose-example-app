@@ -1,3 +1,0 @@
-"""
-Schemas for the database
-"""
