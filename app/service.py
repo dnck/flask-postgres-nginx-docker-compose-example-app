@@ -41,11 +41,12 @@ NEW_ROUTE_ID_SCRIPT = "SELECT max(route_id) + 1 FROM routes;"
 
 UPDATE_ROUTE_SCRIPT = "INSERT INTO routes (route_id, timestamp, geom) VALUES ({}, now(), 'SRID=4326; POINT({} {})');"
 
-COLLECT_POINTS_IN_ROUTE_SCRIPT = (
-    "SELECT * FROM routes WHERE route_id = {} AND geom IS NOT NULL ORDER BY timestamp;"
-)
-
-COLLECT_ROUTES_IN_DAY = """SELECT * FROM routes WHERE timestamp BETWEEN '{}' and '{}'::date + interval '24 hours' AND geom IS NOT NULL;"""
+# TODO Remove this when submitting
+# COLLECT_POINTS_IN_ROUTE_SCRIPT = (
+#     "SELECT * FROM routes WHERE route_id = {} AND geom IS NOT NULL ORDER BY timestamp;"
+# )
+# TODO Remove this when submitting
+# COLLECT_ROUTES_IN_DAY = """SELECT * FROM routes WHERE timestamp BETWEEN '{}' and '{}'::date + interval '24 hours' AND geom IS NOT NULL;"""
 
 SINGLE_ROUTE_LENGTH_QUERY = """
     SELECT sum(route_length) as km from (
@@ -57,7 +58,6 @@ SINGLE_ROUTE_LENGTH_QUERY = """
     """
 
 app = Flask(__name__)
-
 
 def create_new_database():
     """
@@ -71,21 +71,43 @@ def create_new_database():
     cur.execute("CREATE DATABASE {};".format(DB_NAME))
     close_and_commit(cur, conn)
 
-
 def activate_pg_extensions(ext_script):
     conn, cur = conn_cur_and_execute(ext_script)
     close_and_commit(cur, conn)
-
 
 def create_table():
     conn, cur = conn_cur_and_execute(CREATE_TABLE_SCRIPT)
     close_and_commit(cur, conn)
 
-
 def add_geometry_column():
     conn, cur = conn_cur_and_execute(ADD_GEOM_COLUMN_TO_TABLE_SCRIPT)
     close_and_commit(cur, conn)
 
+def conn_cur_and_execute(pgscript):
+    conn = psycopg2.connect(
+        "dbname={} user={} password={}".format(DB_NAME, DB_USER, DB_PASS)
+    )
+    cur = conn.cursor()
+    cur.execute(pgscript)
+    return conn, cur
+
+def close_and_commit(cur, conn):
+    cur.close()
+    conn.commit()
+    conn.close()
+
+# TODO Remove this when submitting
+# def given_date_query_orders_correctly(date):
+#     conn, cur = conn_cur_and_execute(COLLECT_ROUTES_IN_DAY.format(date, date))
+#     results = cur.fetchall()
+#     close_and_commit(cur, conn)
+#     return results
+
+# this function should create a new database record for a route
+@app.route("/route/", methods=["POST"])
+def create_route():
+    new_route = create_new_route()
+    return json.dumps(new_route), 201
 
 def create_new_route():
     """
@@ -103,6 +125,13 @@ def create_new_route():
     close_and_commit(cur, conn)
     return {"route_id": str(new_route_id[0])}
 
+@app.route("/route/<int:route_id>/way_point/", methods=["POST"])
+def add_way_point(route_id):
+    coordinates = request.get_json()  # {“lat”: 59.23425, “lon”: 18.23526}
+    assert "lat" in coordinates
+    assert "lon" in coordinates
+    update_route(route_id, coordinates["lon"], coordinates["lat"])
+    return "OK", 201
 
 def update_route(route_id, longitude, latitude):
     """
@@ -113,60 +142,16 @@ def update_route(route_id, longitude, latitude):
     )
     close_and_commit(cur, conn)
 
-
-def conn_cur_and_execute(pgscript):
-    conn = psycopg2.connect(
-        "dbname={} user={} password={}".format(DB_NAME, DB_USER, DB_PASS)
-    )
-    cur = conn.cursor()
-    cur.execute(pgscript)
-    return conn, cur
-
-
-def close_and_commit(cur, conn):
-    cur.close()
-    conn.commit()
-    conn.close()
-
-
-def given_date_query_orders_correctly(date):
-    conn, cur = conn_cur_and_execute(COLLECT_ROUTES_IN_DAY.format(date, date))
-    results = cur.fetchall()
-    close_and_commit(cur, conn)
-    return results
-
-
-# this function should create a new database record for a route
-@app.route("/route/", methods=["POST"])
-def create_route():
-    new_route = create_new_route()
-    return json.dumps(new_route), 201
-
-
-# This function should post stuff to the database for the given uuid
-@app.route("/route/<int:route_id>/way_point/", methods=["POST"])
-def add_way_point(route_id):
-    coordinates = request.get_json()  # {“lat”: 59.23425, “lon”: 18.23526}
-    assert "lat" in coordinates
-    assert "lon" in coordinates
-    update_route(route_id, coordinates["lon"], coordinates["lat"])
-    return "OK", 201
-
-
-# This function should calculate the length of the route
-# to do so, it needs to qurey the database for the sequence of points
 @app.route("/route/<int:route_id>/length/")
 def calculate_length(route_id):
-    result = find_length_of_single_route(route_id)
+    result = get_length_of_single_route(route_id)
     return json.dumps({"km": result})
 
-
-def find_length_of_single_route(route_id):
+def get_length_of_single_route(route_id):
     conn, cur = conn_cur_and_execute(SINGLE_ROUTE_LENGTH_QUERY.format(route_id))
     result = cur.fetchone()
     close_and_commit(cur, conn)
     return result[0]
-
 
 @app.route("/route/<int:route_id>/points-in-path/")
 def get_points_in_path(route_id):
@@ -174,13 +159,12 @@ def get_points_in_path(route_id):
     response = convert_points_in_path_result_to_response(result)
     return json.dumps(response), 201
 
-
-def collect_points_in_route(route_id):
-    conn, cur = conn_cur_and_execute(COLLECT_POINTS_IN_ROUTE_SCRIPT.format(route_id))
-    results = cur.fetchall()
-    close_and_commit(cur, conn)
-    return results
-
+# TODO Remove this when submitting
+# def collect_points_in_route(route_id):
+#     conn, cur = conn_cur_and_execute(COLLECT_POINTS_IN_ROUTE_SCRIPT.format(route_id))
+#     results = cur.fetchall()
+#     close_and_commit(cur, conn)
+#     return results
 
 def convert_points_in_path_result_to_response(result):
     response = []
