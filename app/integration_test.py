@@ -8,6 +8,7 @@ ROUTE_LENGTH_ENDPOINT = "{}{}/length/".format(ROUTE_ENDPOINT, "{}")
 ROUTE_LONGEST_ROUTE_IN_DAY_ENDPOINT = "{}longest-route/{}".format(
     SERVICE_ENDPOINT, "{}"
 )
+ROUTE_COLLECT_POINTS_ENDPOINT = "{}{}/points-in-path/".format(ROUTE_ENDPOINT, "{}")
 
 
 class TestRoute(object):
@@ -15,7 +16,7 @@ class TestRoute(object):
         {"lat": -25.4025905, "lon": -49.3124416},
         {"lat": -23.559798, "lon": -46.634971},
         {"lat": 59.3258414, "lon": 17.70188},
-        {"lat": 54.273901, "lon": 18.591889},
+        {"lat": 54.273901, "lon": 18.591889}
     ]
 
     def setup(self):
@@ -35,18 +36,25 @@ class TestRoute(object):
         length = self.length_get.json()
         assert 11750 < length["km"] < 11900
 
-    def test_calculate_days_longest_route(self):
+    def test_calculate_longest_route_for_day(self):
         query_date = datetime.datetime.today().strftime("%d-%m-%Y")
         response = requests.get(
             ROUTE_LONGEST_ROUTE_IN_DAY_ENDPOINT.format(query_date)
         )
         query_result = response.json()
-        assert query_date in query_result['date']
         print(query_result)
+        assert query_date in query_result['date']
+
+    def test_get_points_in_path(self):
+        response = requests.get(
+            ROUTE_COLLECT_POINTS_ENDPOINT.format(22)
+        )
+        print(response.json())
 
 
 if __name__ == "__main__":
     test_route = TestRoute()
     test_route.setup()
     test_route.test_length_calculation()
-    test_route.test_calculate_days_longest_route()
+    test_route.test_calculate_longest_route_for_day()
+    test_route.test_get_points_in_path()
