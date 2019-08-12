@@ -1,9 +1,7 @@
 import datetime
 
 import psycopg2
-
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-
 
 TODAY = datetime.datetime.now().strftime("%m-%d-%Y")
 
@@ -109,6 +107,7 @@ ADD_TRANSACTION_ROW_2 = """
     VALUES (0, '1984-01-28 00:00:01',  1520.7042);
 """
 
+
 def create_new_database():
     """
     PERSISTENCE_PROVIDER is default
@@ -158,7 +157,7 @@ def execute_pgscript(pgscript):
     return conn, cur
 
 
-def bootstrap_tables_with_first_route_id():
+def bootstrap_tables():
     conn, cur = execute_pgscript(ADD_TRANSACTION_ROW_0)
     close_and_commit(cur, conn)
     conn, cur = execute_pgscript(ADD_TRANSACTION_ROW_1)
@@ -228,7 +227,7 @@ def close_and_commit(cur, conn):
     conn.close()
 
 
-def initialize_db_with_extension_and_tables():
+def initialize_db():
     exists = db_exists(DB_NAME)
     if not exists:
         create_new_database()
@@ -240,5 +239,5 @@ def initialize_db_with_extension_and_tables():
     exists = table_exists("route_lengths")
     if not exists:
         create_route_length_table()
-        bootstrap_tables_with_first_route_id()
+        bootstrap_tables()
     return True

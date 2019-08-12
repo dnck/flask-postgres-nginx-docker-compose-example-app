@@ -1,9 +1,9 @@
 import datetime
 import json
+import logging
 
 from flask import Flask, request
 from flask.logging import create_logger
-import logging
 
 import models
 
@@ -15,17 +15,22 @@ SECRET = "hello-planet-labs"
 
 LONGEST_ROUTE_IN_DAY_CACHE = {"1984-01-28": [0, 833.77]}
 
+
 @APP.route("/initialize_db/", methods=["POST"])
 def initialize_db():
     """This must be called before anything else."""
     secret_key = request.get_json()
     if secret_key["key"] == SECRET:
-        models.initialize_db_with_extension_and_tables()
+        models.initialize_db()
         exists = models.db_exists(models.DB_NAME)
         routes_table_exists = models.table_exists("routes")
         route_lengths_exists = models.table_exists("route_lengths")
         assert exists == routes_table_exists == route_lengths_exists
-        return json.dumps({"Success!": "PostGres DB with postgis extensions is created."}), 201
+        return (
+            json.dumps({"Success!": "PostGres DB with postgis extensions is created."}),
+            201,
+        )
+    return json.dumps({"Error": "Failed to initialize the db"}), 500
 
 
 @APP.route("/route/", methods=["POST"])
@@ -53,7 +58,7 @@ def _create_route():
     conn, cur = models.execute_pgscript(models.GET_NEW_ROUTE_ID_SCRIPT)
     new_route_id = cur.fetchone()
     if str(new_route_id[0]) == "None":
-        LOG.debug("Our first track on route_id 0!")
+        LOG.info("Our first track on route_id 0!")
         cur.execute(models.START_NEW_ROUTE_SCRIPT.format(0))
         models.close_and_commit(cur, conn)
         return {"route_id": 0}
@@ -173,10 +178,10 @@ def calculate_longest_route_for_day(query_date):
             json.dumps({"Error": "The request will only query days in the past."}),
             403,
         )
-    #The request is for a date older than today, so we query the
-    #Postgres server with a longest-route script.
-    #This script maps a route_id to the max(km)
-    #traveled within a given day.
+    # The request is for a date older than today, so we query the
+    # Postgres server with a longest-route script.
+    # This script maps a route_id to the max(km)
+    # traveled within a given day.
     conn, cur = models.execute_pgscript(
         models.LONGEST_ROUTE_IN_DAY_QUERY.format(query_date, query_date)
     )
@@ -195,10 +200,7 @@ def calculate_longest_route_for_day(query_date):
             ),
             201,
         )
-    return (
-        json.dumps({"Error": "No routes recorded for {}".format(query_date)}),
-        404,
-        )
+    return (json.dumps({"Error": "No routes recorded for {}".format(query_date)}), 404)
 
 
 def query_date_is_in_cache(query_date):
