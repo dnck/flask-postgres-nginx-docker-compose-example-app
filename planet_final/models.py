@@ -1,183 +1,254 @@
+# -*- coding: utf-8 -*-
+"""Example Google style docstrings.
+
+This module demonstrates documentation as specified by the `Google Python
+Style Guide`_. Docstrings may extend over multiple lines. Sections are created
+with a section header and a colon followed by a block of indented text.
+
+Example:
+    Examples can be given using either the ``Example`` or ``Examples``
+    sections. Sections support any reStructuredText formatting, including
+    literal blocks::
+
+        $ python example_google.py
+
+Section breaks are created by resuming unindented text. Section breaks
+are also implicitly created anytime a new section starts.
+
+Attributes:
+    module_level_variable1 (int): Module level variables may be documented in
+        either the ``Attributes`` section of the module docstring, or in an
+        inline docstring immediately following the variable.
+
+        Either form is acceptable, but the two should not be mixed. Choose
+        one convention to document module level variables and be consistent
+        with it.
+
+Todo:
+    * For module TODOs
+    * You have to also use ``sphinx.ext.todo`` extension
+
+"""
 import datetime
 
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
+import querys
+
+#TODO Remove this today variable
 TODAY = datetime.datetime.now().strftime("%m-%d-%Y")
 
 PERSISTENCE_PROVIDER = "postgres"
+DB_HOST = "db"
+DB_PORT = 5432
 DB_USER = "postgres"
 DB_PASS = "password"
 DB_NAME = "planet"
 
-# Postgres scripts for db
-CREATE_DB_SCRIPT = "CREATE DATABASE {};"
-
-DB_EXISTS_SCRIPT = """
-    SELECT datname
-    FROM pg_catalog.pg_database
-    WHERE lower(datname) = lower('{}');
-"""
-
-ADD_POSTGIS_TO_DB_SCRIPT = "CREATE EXTENSION IF NOT EXISTS postgis"
-
-DROP_DB_SCRIPT = "DROP DATABASE IF EXISTS {}"
-
-TABLE_EXISTS_SCRIPT = """
-    SELECT exists(SELECT relname FROM pg_class WHERE relname='{}')
-"""
-
-CREATE_ROUTE_TABLE_SCRIPT = """
-    CREATE TABLE routes (
-    route_id SERIAL,
-    timestamp TIMESTAMP
-    );
-"""
-
-ADD_GEOM_COLUMN_TO_TABLE_SCRIPT = """
-    SELECT AddGeometryColumn('public', '{}', 'geom', 4326, 'POINT', 2);
-"""
-
-CREATE_ROUTE_LEN_TABLE_SCRIPT = """
-    CREATE TABLE route_lengths (
-    route_id SERIAL,
-    creation_time TIMESTAMP,
-    route_length REAL
-    );
-"""
-
-GET_NEW_ROUTE_ID_SCRIPT = "SELECT max(route_id) + 1 FROM route_lengths;"
-
-START_NEW_ROUTE_SCRIPT = """
-    INSERT INTO route_lengths (route_id, creation_time, route_length)
-    VALUES ({}, now(),  0.00);
-"""
-
-UPDATE_ROUTE_SCRIPT = """
-    INSERT INTO routes (route_id, timestamp, geom)
-    VALUES ({}, now(), 'SRID=4326; POINT({} {})');
-"""
-
-TEST = "SELECT * FROM routes;"
-
-SINGLE_ROUTE_LENGTH_QUERY = """
-    SELECT sum(route_length) as km from (
-        SELECT
-        ST_DistanceSphere(geom, lag(geom, 1) OVER (ORDER BY timestamp)) / 1000 as route_length
-        FROM routes
-        WHERE route_id = {}
-    ) as route_length_table;
-"""
-
-UPDATE_ROUTE_LENGTH_SCRIPT = """
-    UPDATE route_lengths SET route_length = {} WHERE route_id = {};
-"""
-
-DROP_TABLE_SCRIPT = """DROP TABLE IF EXISTS {}"""
-
-LONGEST_ROUTE_IN_DAY_QUERY = """
-    SELECT route_id, sum(km) as total_km
-    FROM
-    	(SELECT route_id, km as km
-    	 FROM (
-    		SELECT route_id, ST_DistanceSphere(geom, lag(geom, 1) OVER (partition by route_id ORDER BY timestamp)) / 1000 as km
-    		FROM routes
-    	 	WHERE timestamp BETWEEN '{}' and '{}'::date + interval '24 hours'
-    	 ) as route_length_table)
-    	as table_two
-    group by route_id
-    order by total_km DESC LIMIT 1;
-"""
-
-CHECK_ORIGIN_TIME_SCRIPT = """
-    SELECT creation_time FROM route_lengths WHERE route_id = {};
-"""
-# Longitude / Latitude Philadelphia
-ADD_TRANSACTION_ROW_1 = """
-    INSERT INTO routes (route_id, timestamp, geom)
-    VALUES (0, '1984-01-28 00:00:01', 'SRID=4326; POINT(-89.11673 32.77152)');
-"""
-# Longitude / Latitude Tampa
-ADD_TRANSACTION_ROW_0 = """
-   INSERT INTO routes (route_id, timestamp, geom)
-   VALUES (0, '1984-01-28 00:00:00', 'SRID=4326; POINT(-82.45843 27.94752)')
-"""
-ADD_TRANSACTION_ROW_2 = """
-    INSERT INTO route_lengths (route_id, creation_time, route_length)
-    VALUES (0, '1984-01-28 00:00:01',  1520.7042);
-"""
-
-
 def create_new_database():
-    """
-    PERSISTENCE_PROVIDER is default
+    """Example function with types documented in the docstring.
+
+    `PEP 484`_ type annotations are supported. If attribute, parameter, and
+    return types are annotated according to `PEP 484`_, they do not need to be
+    included in the docstring:
+
+    Args:
+        param1 (int): The first parameter.
+        param2 (str): The second parameter.
+
+    Returns:
+        bool: The return value. True for success, False otherwise.
+
+    .. _PEP 484:
+        https://www.python.org/dev/peps/pep-0484/
+
     """
     conn = psycopg2.connect(
-        host="db",
-        port=5432,
+        host=DB_HOST,
+        port=DB_PORT,
         dbname=PERSISTENCE_PROVIDER,
         user=DB_USER,
         password=DB_PASS,
     )
     conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
-    cur.execute(CREATE_DB_SCRIPT.format(DB_NAME))
+    cur.execute(querys.CREATE_DB.format(DB_NAME))
     close_and_commit(cur, conn)
     return True
 
 
 def activate_postgis_extension():
-    conn, cur = execute_pgscript(ADD_POSTGIS_TO_DB_SCRIPT)
+    """Example function with types documented in the docstring.
+
+    `PEP 484`_ type annotations are supported. If attribute, parameter, and
+    return types are annotated according to `PEP 484`_, they do not need to be
+    included in the docstring:
+
+    Args:
+        param1 (int): The first parameter.
+        param2 (str): The second parameter.
+
+    Returns:
+        bool: The return value. True for success, False otherwise.
+
+    .. _PEP 484:
+        https://www.python.org/dev/peps/pep-0484/
+
+    """
+    conn, cur = execute_pgscript(querys.ADD_POSTGIS_TO_DB)
     close_and_commit(cur, conn)
     return True
 
 
 def create_route_table():
-    conn, cur = execute_pgscript(CREATE_ROUTE_TABLE_SCRIPT)
+    """Example function with types documented in the docstring.
+
+    `PEP 484`_ type annotations are supported. If attribute, parameter, and
+    return types are annotated according to `PEP 484`_, they do not need to be
+    included in the docstring:
+
+    Args:
+        param1 (int): The first parameter.
+        param2 (str): The second parameter.
+
+    Returns:
+        bool: The return value. True for success, False otherwise.
+
+    .. _PEP 484:
+        https://www.python.org/dev/peps/pep-0484/
+
+    """
+    conn, cur = execute_pgscript(querys.CREATE_ROUTE_TABLE)
     close_and_commit(cur, conn)
     return True
 
 
 def create_route_length_table():
-    conn, cur = execute_pgscript(CREATE_ROUTE_LEN_TABLE_SCRIPT)
+    """Example function with types documented in the docstring.
+
+    `PEP 484`_ type annotations are supported. If attribute, parameter, and
+    return types are annotated according to `PEP 484`_, they do not need to be
+    included in the docstring:
+
+    Args:
+        param1 (int): The first parameter.
+        param2 (str): The second parameter.
+
+    Returns:
+        bool: The return value. True for success, False otherwise.
+
+    .. _PEP 484:
+        https://www.python.org/dev/peps/pep-0484/
+
+    """
+    conn, cur = execute_pgscript(querys.CREATE_ROUTE_LEN_TABLE)
     close_and_commit(cur, conn)
 
 
 def add_geometry_column_to_table():
-    conn, cur = execute_pgscript(ADD_GEOM_COLUMN_TO_TABLE_SCRIPT.format("routes"))
+    """Example function with types documented in the docstring.
+
+    `PEP 484`_ type annotations are supported. If attribute, parameter, and
+    return types are annotated according to `PEP 484`_, they do not need to be
+    included in the docstring:
+
+    Args:
+        param1 (int): The first parameter.
+        param2 (str): The second parameter.
+
+    Returns:
+        bool: The return value. True for success, False otherwise.
+
+    .. _PEP 484:
+        https://www.python.org/dev/peps/pep-0484/
+
+    """
+    conn, cur = execute_pgscript(querys.ADD_GEOM_COLUMN_TO_TABLE.format("routes"))
+    close_and_commit(cur, conn)
+
+
+def bootstrap_tables():
+    """Example function with types documented in the docstring.
+
+    `PEP 484`_ type annotations are supported. If attribute, parameter, and
+    return types are annotated according to `PEP 484`_, they do not need to be
+    included in the docstring:
+
+    Args:
+        param1 (int): The first parameter.
+        param2 (str): The second parameter.
+
+    Returns:
+        bool: The return value. True for success, False otherwise.
+
+    .. _PEP 484:
+        https://www.python.org/dev/peps/pep-0484/
+
+    """
+    conn, cur = execute_pgscript(querys.ADD_TRANSACTION_ROW_0)
+    close_and_commit(cur, conn)
+    conn, cur = execute_pgscript(querys.ADD_TRANSACTION_ROW_1)
+    close_and_commit(cur, conn)
+    conn, cur = execute_pgscript(querys.ADD_TRANSACTION_ROW_2)
     close_and_commit(cur, conn)
 
 
 def execute_pgscript(pgscript):
+    """Example function with types documented in the docstring.
+
+    `PEP 484`_ type annotations are supported. If attribute, parameter, and
+    return types are annotated according to `PEP 484`_, they do not need to be
+    included in the docstring:
+
+    Args:
+        param1 (int): The first parameter.
+        param2 (str): The second parameter.
+
+    Returns:
+        bool: The return value. True for success, False otherwise.
+
+    .. _PEP 484:
+        https://www.python.org/dev/peps/pep-0484/
+
+    """
     conn = psycopg2.connect(
-        host="db", port=5432, dbname=DB_NAME, user=DB_USER, password=DB_PASS
+        host=DB_HOST, port=DB_PORT, dbname=DB_NAME, user=DB_USER, password=DB_PASS
     )
     cur = conn.cursor()
     cur.execute(pgscript)
     return conn, cur
 
 
-def bootstrap_tables():
-    conn, cur = execute_pgscript(ADD_TRANSACTION_ROW_0)
-    close_and_commit(cur, conn)
-    conn, cur = execute_pgscript(ADD_TRANSACTION_ROW_1)
-    close_and_commit(cur, conn)
-    conn, cur = execute_pgscript(ADD_TRANSACTION_ROW_2)
-    close_and_commit(cur, conn)
-
-
 def db_exists(db_name):
+    """Example function with types documented in the docstring.
+
+    `PEP 484`_ type annotations are supported. If attribute, parameter, and
+    return types are annotated according to `PEP 484`_, they do not need to be
+    included in the docstring:
+
+    Args:
+        param1 (int): The first parameter.
+        param2 (str): The second parameter.
+
+    Returns:
+        bool: The return value. True for success, False otherwise.
+
+    .. _PEP 484:
+        https://www.python.org/dev/peps/pep-0484/
+
+    """
     exists = ""
     try:
         conn = psycopg2.connect(
-            host="db",
-            port=5432,
+            host=DB_HOST,
+            port=DB_PORT,
             dbname=PERSISTENCE_PROVIDER,
             user=DB_USER,
             password=DB_PASS,
         )
         cur = conn.cursor()
-        cur.execute(DB_EXISTS_SCRIPT.format(db_name))
+        cur.execute(querys.DB_EXISTS.format(db_name))
         exists = cur.fetchone()
     except psycopg2.Error as err:
         close_and_commit(cur, conn)
@@ -189,9 +260,27 @@ def db_exists(db_name):
 
 
 def table_exists(table_name):
+    """Example function with types documented in the docstring.
+
+    `PEP 484`_ type annotations are supported. If attribute, parameter, and
+    return types are annotated according to `PEP 484`_, they do not need to be
+    included in the docstring:
+
+    Args:
+        param1 (int): The first parameter.
+        param2 (str): The second parameter.
+
+    Returns:
+        bool: The return value. True for success, False otherwise.
+
+    .. _PEP 484:
+        https://www.python.org/dev/peps/pep-0484/
+
+    """
     exists = False
     try:
-        conn, cur = execute_pgscript(TABLE_EXISTS_SCRIPT.format(table_name))
+        conn, cur = \
+            execute_pgscript(querys.TABLE_EXISTS.format(table_name))
         exists = cur.fetchone()[0]
     except psycopg2.Error as err:
         close_and_commit(cur, conn)
@@ -201,33 +290,100 @@ def table_exists(table_name):
 
 
 def drop_table(table_name):
-    conn, cur = execute_pgscript(DROP_TABLE_SCRIPT.format(table_name))
+    """Example function with types documented in the docstring.
+
+    `PEP 484`_ type annotations are supported. If attribute, parameter, and
+    return types are annotated according to `PEP 484`_, they do not need to be
+    included in the docstring:
+
+    Args:
+        param1 (int): The first parameter.
+        param2 (str): The second parameter.
+
+    Returns:
+        bool: The return value. True for success, False otherwise.
+
+    .. _PEP 484:
+        https://www.python.org/dev/peps/pep-0484/
+
+    """
+    conn, cur = execute_pgscript(querys.DROP_TABLE.format(table_name))
     close_and_commit(cur, conn)
     return True
 
 
 def drop_database():
+    """Example function with types documented in the docstring.
+
+    `PEP 484`_ type annotations are supported. If attribute, parameter, and
+    return types are annotated according to `PEP 484`_, they do not need to be
+    included in the docstring:
+
+    Args:
+        param1 (int): The first parameter.
+        param2 (str): The second parameter.
+
+    Returns:
+        bool: The return value. True for success, False otherwise.
+
+    .. _PEP 484:
+        https://www.python.org/dev/peps/pep-0484/
+
+    """
     conn = psycopg2.connect(
-        host="db",
-        port=5432,
+        host=DB_HOST,
+        port=DB_PORT,
         dbname=PERSISTENCE_PROVIDER,
         user=DB_USER,
         password=DB_PASS,
     )
     conn.autocommit = True
     cur = conn.cursor()
-    cur.execute(DROP_DB_SCRIPT.format(DB_NAME))
+    cur.execute(querys.DROP_DB.format(DB_NAME))
     close_and_commit(cur, conn)
     return True
 
 
 def close_and_commit(cur, conn):
+    """Example function with types documented in the docstring.
+
+    `PEP 484`_ type annotations are supported. If attribute, parameter, and
+    return types are annotated according to `PEP 484`_, they do not need to be
+    included in the docstring:
+
+    Args:
+        param1 (int): The first parameter.
+        param2 (str): The second parameter.
+
+    Returns:
+        bool: The return value. True for success, False otherwise.
+
+    .. _PEP 484:
+        https://www.python.org/dev/peps/pep-0484/
+
+    """
     cur.close()
     conn.commit()
     conn.close()
 
-
 def initialize_db():
+    """Example function with types documented in the docstring.
+
+    `PEP 484`_ type annotations are supported. If attribute, parameter, and
+    return types are annotated according to `PEP 484`_, they do not need to be
+    included in the docstring:
+
+    Args:
+        param1 (int): The first parameter.
+        param2 (str): The second parameter.
+
+    Returns:
+        bool: The return value. True for success, False otherwise.
+
+    .. _PEP 484:
+        https://www.python.org/dev/peps/pep-0484/
+
+    """
     exists = db_exists(DB_NAME)
     if not exists:
         create_new_database()

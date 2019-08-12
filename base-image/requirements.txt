@@ -1,6 +1,0 @@
-flask
-requests
-pytest
-shapely
-pyproj
-psycopg2

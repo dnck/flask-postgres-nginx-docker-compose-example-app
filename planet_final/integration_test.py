@@ -1,3 +1,34 @@
+# -*- coding: utf-8 -*-
+"""Example Google style docstrings.
+
+This module demonstrates documentation as specified by the `Google Python
+Style Guide`_. Docstrings may extend over multiple lines. Sections are created
+with a section header and a colon followed by a block of indented text.
+
+Example:
+    Examples can be given using either the ``Example`` or ``Examples``
+    sections. Sections support any reStructuredText formatting, including
+    literal blocks::
+
+        $ python example_google.py
+
+Section breaks are created by resuming unindented text. Section breaks
+are also implicitly created anytime a new section starts.
+
+Attributes:
+    module_level_variable1 (int): Module level variables may be documented in
+        either the ``Attributes`` section of the module docstring, or in an
+        inline docstring immediately following the variable.
+
+        Either form is acceptable, but the two should not be mixed. Choose
+        one convention to document module level variables and be consistent
+        with it.
+
+Todo:
+    * For module TODOs
+    * You have to also use ``sphinx.ext.todo`` extension
+
+"""
 import datetime
 
 import requests
@@ -13,7 +44,9 @@ ROUTE_LONGEST_ROUTE_IN_DAY_ENDPOINT = "{}longest-route/{}".format(
 )
 
 
-class TestRoute(object):
+class TestRoute():
+    """This method does a test"""
+
     wgs84_coordinates = [
         {"lat": -25.4025905, "lon": -49.3124416},
         {"lat": -23.559798, "lon": -46.634971},
@@ -22,7 +55,8 @@ class TestRoute(object):
     ]
 
     def setup(self):
-        self.bootstrap_msg = requests.post(BOOTSTRAP_ENDPOINT, json={"key": SECRET_KEY})
+        """This method does a test"""
+        bootstrap_msg = requests.post(BOOTSTRAP_ENDPOINT, json={"key": SECRET_KEY})
         self.route_post = requests.post(ROUTE_ENDPOINT)
         route = self.route_post.json()
         route_id = route["route_id"]
@@ -30,12 +64,14 @@ class TestRoute(object):
         self.length_get = requests.get(ROUTE_LENGTH_ENDPOINT.format(route_id))
 
     def _push_route(self, route_id):
+        """This method does a test"""
         for coordinates in self.wgs84_coordinates:
             requests.post(
                 ROUTE_ADD_WAY_POINT_ENDPOINT.format(route_id), json=coordinates
             )
 
     def test_length_calculation(self):
+        """This method does a test"""
         length = self.length_get.json()
         assert 11750 < length["km"] < 11900
 
@@ -49,9 +85,7 @@ class TestRoute(object):
 
     # TODO refactor into smaller test cases
     def test_calculate_longest_route_for_today(self):
-        """
-        Should fail
-        """
+        """This method does a test"""
         query_date = datetime.datetime.today().strftime("%Y-%m-%d")
         response = requests.get(ROUTE_LONGEST_ROUTE_IN_DAY_ENDPOINT.format(query_date))
         assert response.status_code == 403
@@ -59,7 +93,8 @@ class TestRoute(object):
         assert query_result["Error"] == "The request will only query days in the past."
 
     def test_calculate_longest_route_for_past_day(self):
-        query_date = "1984-01-28"  # %Y-%m-%d
+        """Client %Y-%m-%d"""
+        query_date = "1984-01-28"
         response = requests.get(ROUTE_LONGEST_ROUTE_IN_DAY_ENDPOINT.format(query_date))
         query_result = response.json()
         acceptable_error_messages = [
@@ -74,6 +109,7 @@ class TestRoute(object):
 
 
 def do_all_tests():
+    """This method does a test"""
     test_route = TestRoute()
     test_route.setup()
     test_route.test_length_calculation()
@@ -81,5 +117,5 @@ def do_all_tests():
     test_route.test_calculate_longest_route_for_today()
     test_route.test_calculate_longest_route_for_past_day()
 
-
-do_all_tests()
+if __name__ == "__main__":
+    do_all_tests()

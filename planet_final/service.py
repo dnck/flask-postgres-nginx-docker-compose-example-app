@@ -1,3 +1,34 @@
+# -*- coding: utf-8 -*-
+"""Example Google style docstrings.
+
+This module demonstrates documentation as specified by the `Google Python
+Style Guide`_. Docstrings may extend over multiple lines. Sections are created
+with a section header and a colon followed by a block of indented text.
+
+Example:
+    Examples can be given using either the ``Example`` or ``Examples``
+    sections. Sections support any reStructuredText formatting, including
+    literal blocks::
+
+        $ python example_google.py
+
+Section breaks are created by resuming unindented text. Section breaks
+are also implicitly created anytime a new section starts.
+
+Attributes:
+    module_level_variable1 (int): Module level variables may be documented in
+        either the ``Attributes`` section of the module docstring, or in an
+        inline docstring immediately following the variable.
+
+        Either form is acceptable, but the two should not be mixed. Choose
+        one convention to document module level variables and be consistent
+        with it.
+
+Todo:
+    * For module TODOs
+    * You have to also use ``sphinx.ext.todo`` extension
+
+"""
 import datetime
 import json
 import logging
@@ -18,7 +49,23 @@ LONGEST_ROUTE_IN_DAY_CACHE = {"1984-01-28": [0, 833.77]}
 
 @APP.route("/initialize_db/", methods=["POST"])
 def initialize_db():
-    """This must be called before anything else."""
+   """Example function with types documented in the docstring.
+
+    `PEP 484`_ type annotations are supported. If attribute, parameter, and
+    return types are annotated according to `PEP 484`_, they do not need to be
+    included in the docstring:
+
+    Args:
+        param1 (int): The first parameter.
+        param2 (str): The second parameter.
+
+    Returns:
+        bool: The return value. True for success, False otherwise.
+
+    .. _PEP 484:
+        https://www.python.org/dev/peps/pep-0484/
+
+    """
     secret_key = request.get_json()
     if secret_key["key"] == SECRET:
         models.initialize_db()
@@ -55,15 +102,15 @@ def _create_route():
     In both case, a new row, (route_id, creation_time, route_length)
     is stored in the route_lengths table.
     """
-    conn, cur = models.execute_pgscript(models.GET_NEW_ROUTE_ID_SCRIPT)
+    conn, cur = models.execute_pgscript(models.querys.GET_NEW_ROUTE_ID)
     new_route_id = cur.fetchone()
     if str(new_route_id[0]) == "None":
         LOG.info("Our first track on route_id 0!")
-        cur.execute(models.START_NEW_ROUTE_SCRIPT.format(0))
+        cur.execute(models.querys.START_NEW_ROUTE.format(0))
         models.close_and_commit(cur, conn)
         return {"route_id": 0}
     LOG.debug("Assigning route_id {} to new route.".format(new_route_id[0]))
-    cur.execute(models.START_NEW_ROUTE_SCRIPT.format(new_route_id[0]))
+    cur.execute(models.querys.START_NEW_ROUTE.format(new_route_id[0]))
     models.close_and_commit(cur, conn)
     return {"route_id": str(new_route_id[0])}
 
@@ -101,7 +148,7 @@ def _update_route(route_id, longitude, latitude):
             403,
         )
     conn, cur = models.execute_pgscript(
-        models.UPDATE_ROUTE_SCRIPT.format(route_id, longitude, latitude)
+        models.querys.UPDATE_ROUTE.format(route_id, longitude, latitude)
     )
     LOG.debug("Updating the route of id {}".format(route_id))
     models.close_and_commit(cur, conn)
@@ -114,7 +161,7 @@ def is_origin_time_older_than_today(route_id):
     current day.
     """
     conn, cur = models.execute_pgscript(
-        models.CHECK_ORIGIN_TIME_SCRIPT.format(route_id)
+        models.querys.CHECK_ORIGIN_TIME.format(route_id)
     )
     creation_time = cur.fetchone()
     models.close_and_commit(cur, conn)
@@ -144,7 +191,7 @@ def _get_length_of_single_route(route_id):
     """
     LOG.debug("Finding the length of route_id = {}".format(route_id))
     conn, cur = models.execute_pgscript(
-        models.SINGLE_ROUTE_LENGTH_QUERY.format(route_id)
+        models.querys.SINGLE_ROUTE_LENGTH.format(route_id)
     )
     length_of_route = cur.fetchone()
     models.close_and_commit(cur, conn)
@@ -183,11 +230,10 @@ def calculate_longest_route_for_day(query_date):
     # This script maps a route_id to the max(km)
     # traveled within a given day.
     conn, cur = models.execute_pgscript(
-        models.LONGEST_ROUTE_IN_DAY_QUERY.format(query_date, query_date)
+        models.querys.LONGEST_ROUTE_IN_DAY.format(query_date, query_date)
     )
     longest_route_in_a_day = cur.fetchone()
     models.close_and_commit(cur, conn)
-    # It is possible there were no routes for that day, so we check
     if longest_route_in_a_day:
         update_long_route_cache(query_date, longest_route_in_a_day)
         return (
@@ -200,6 +246,7 @@ def calculate_longest_route_for_day(query_date):
             ),
             201,
         )
+    # It is possible that there were no routes for query_date.
     return (json.dumps({"Error": "No routes recorded for {}".format(query_date)}), 404)
 
 
