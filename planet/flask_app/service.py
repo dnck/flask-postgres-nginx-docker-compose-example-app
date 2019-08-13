@@ -191,7 +191,8 @@ def is_origin_time_older_than_today(route_id):
 
 @APP.route("/route/<int:route_id>/length/")
 def calculate_length(route_id):
-    """
+    """Route length endpoint
+
     > Eventually a request to get the length of the route is made.'
 
     "Eventually" is ambiguous, so we allow for queries on the length of a
@@ -205,8 +206,9 @@ def calculate_length(route_id):
         404 response code - if the route_id has no waypoints
     """
     route_id_has_waypoints = _route_id_has_waypoints(route_id)
+    #LOG.debug("Route {} has waypoints = {}".format(route_id, route_id_has_waypoints))
     if not route_id_has_waypoints:
-        json.dumps(
+        return json.dumps(
             {"Error": "route_id {} has not added any waypoints".format(route_id)}
         ), 404
     length_of_route = _get_length_of_single_route(route_id)
