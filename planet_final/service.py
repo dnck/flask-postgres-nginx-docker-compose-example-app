@@ -94,13 +94,14 @@ def create_route():
 
 def _create_route():
     """
-    If there are no records in the DB,
-        return 0 as the route_id
-    else,
-        return the max route_id in the DB + 1 as the route_id.
+    If there are no records in the DB, the srevice returns 0 as the route_id
+    else, it returns the max route_id from the route_lengths table + 1 as
+    the route_id. In both case, a new row,
+    (route_id, creation_time, route_length) is stored in the route_lengths table.
 
-    In both case, a new row, (route_id, creation_time, route_length)
-    is stored in the route_lengths table.
+    Returns:
+        dict
+            key: 'route_id' (str); value: (int) - new route id
     """
     conn, cur = models.execute_pgscript(models.querys.GET_NEW_ROUTE_ID)
     new_route_id = cur.fetchone()

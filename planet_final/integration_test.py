@@ -1,32 +1,26 @@
 # -*- coding: utf-8 -*-
-"""Example Google style docstrings.
-
-This module demonstrates documentation as specified by the `Google Python
-Style Guide`_. Docstrings may extend over multiple lines. Sections are created
-with a section header and a colon followed by a block of indented text.
+"""This module is provided as a client-server integration test.
 
 Example:
-    Examples can be given using either the ``Example`` or ``Examples``
-    sections. Sections support any reStructuredText formatting, including
-    literal blocks::
+    After the Flask app defined in service.py is running,
 
-        $ python example_google.py
+        $ python integration_test.py
 
-Section breaks are created by resuming unindented text. Section breaks
-are also implicitly created anytime a new section starts.
-
-Attributes:
-    module_level_variable1 (int): Module level variables may be documented in
-        either the ``Attributes`` section of the module docstring, or in an
-        inline docstring immediately following the variable.
-
-        Either form is acceptable, but the two should not be mixed. Choose
-        one convention to document module level variables and be consistent
-        with it.
-
-Todo:
-    * For module TODOs
-    * You have to also use ``sphinx.ext.todo`` extension
+    Constants:
+        SECRET_KEY (str): passed to the BOOTSTRAP_ENDPOINT in a POST to
+            initialize the database. This is for development purposes only.
+        SERVICE_ENDPOINT (str): Flask app is running here
+        BOOTSTRAP_ENDPOINT (str): POSTs to this endpoint will call
+            the models.initialize_db() method
+        ROUTE_ENDPOINT (str): POSTs to this endpoint will request a new route_id
+            to be created in the route_lengths table of the service
+        ROUTE_ADD_WAY_POINT_ENDPOINT (str): POSTs to this endpoint will
+            add the latitude and longitude coordinates to the service routes table
+        ROUTE_LENGTH_ENDPOINT (str): GETs to this endpoint formatted with a
+            route_id (str) will return the length of the route_id
+        ROUTE_LONGEST_ROUTE_IN_DAY_ENDPOINT (str): GETs to this endpoint
+            formatted with a query_date (str) %Y-%m-%d will return the
+            route_id and its length of the longest route in the query_date.
 
 """
 import datetime
@@ -46,7 +40,7 @@ ROUTE_LONGEST_ROUTE_IN_DAY_ENDPOINT = "{}longest-route/{}".format(
 
 
 class TestRoute():
-    """This method does a test"""
+    """Class for testing the service from a client perspective"""
 
     wgs84_coordinates = [
         {"lat": -25.4025905, "lon": -49.3124416},
@@ -56,41 +50,53 @@ class TestRoute():
     ]
 
     def setup(self):
-        """This method does a test"""
+        """
+        Bootstraps the database with its first past-day record and afterwards,
+        creates a new route_id for today, adds the waypoints from instance variable
+        wgs84_coordinates, finally querys for the new route_ids length.
+        """
         bootstrap_msg = requests.post(BOOTSTRAP_ENDPOINT, json={"key": SECRET_KEY})
         route_id = self.start_new_route()
         self._push_route(route_id)
         self.length_get = requests.get(ROUTE_LENGTH_ENDPOINT.format(route_id))
 
     def start_new_route(self):
-        """Pass"""
+        """Basic method for starting a new route_id
+
+        Returns:
+            route_id (str): the new route_id entered into the db
+        """
         self.route_post = requests.post(ROUTE_ENDPOINT)
         route = self.route_post.json()
         return route["route_id"]
 
     def _push_route(self, route_id):
-        """This method does a test"""
+        """Planet provided function for adding waypoints from wgs84_coordinates"""
         for coordinates in self.wgs84_coordinates:
             requests.post(
                 ROUTE_ADD_WAY_POINT_ENDPOINT.format(route_id), json=coordinates
             )
 
     def test_length_calculation(self):
-        """This method does a test"""
+        """Planet provided test for query on the length of the second route_id
+        created by the setup method.
+        """
         length = self.length_get.json()
         assert 11750 < length["km"] < 11900
 
     def test_bootstrap_route_length(self):
         """
-        Passes with the first route we add for bootstrapping the db
+        Test that the bootstrap route is within the given interval.
         """
         bootstrap_len = requests.get(ROUTE_LENGTH_ENDPOINT.format(0))
         bootstrap_len = bootstrap_len.json()
         assert 800 < bootstrap_len["km"] < 850
 
-    # TODO refactor into smaller test cases
     def test_calculate_longest_route_for_today(self):
-        """This method does a test"""
+        """Test that the longest route for query date of today returns an Error
+        per the service definitions:
+            "The request will only query days in the past"
+        """
         query_date = datetime.datetime.today().strftime("%Y-%m-%d")
         response = requests.get(ROUTE_LONGEST_ROUTE_IN_DAY_ENDPOINT.format(query_date))
         assert response.status_code == 403
@@ -98,7 +104,11 @@ class TestRoute():
         assert query_result["Error"] == "The request will only query days in the past."
 
     def test_calculate_longest_route_for_past_day(self):
-        """Client %Y-%m-%d"""
+        """Test that the service returns a result for querys for a previous
+        days longest route. The request is formatted with variable query_date (str)
+        in the format of %Y-%m-%d. As the service may not have waypoints for
+        a particular date, acceptable error messages are caught and checked as well.
+        """
         query_date = "1984-01-28"
         response = requests.get(ROUTE_LONGEST_ROUTE_IN_DAY_ENDPOINT.format(query_date))
         query_result = response.json()
@@ -112,38 +122,51 @@ class TestRoute():
         else:
             assert "km" in query_result.keys()
 
+    #TODO needs assertions
     def test_random_route(self):
-        func = random.choice([self.random_route_id, self.start_new_route])
+        """
+        Randomly requests a new route_id and adds waypoints,
+        or attempts to add waypoints to an existing route_id.
+        """
+        func = random.choice([self._random_route_id, self.start_new_route])
         route_id = func()
-        for x in range(random.randint(1, 100)):
-            coordinates = self.random_lon_lat()
+        for x in range(random.randint(1, 20)):
+            coordinates = self._random_lon_lat()
             response = requests.post(
                 ROUTE_ADD_WAY_POINT_ENDPOINT.format(route_id), json=coordinates
             )
             time.sleep(0.25)
 
-    def random_route_id(self):
+    def _random_route_id(self):
+        """Helper function for test_random_route
+
+        Returns:
+            random route_id (int) in the interval 1 to 10
+        """
         return random.randint(1, 10)
 
-    def random_lon_lat(self):
+    def _random_lon_lat(self):
+        """Helper function for test_random_route
+
+        Returns:
+            coordinates (dict):
+                key: 'lat' (str); value: (float) - a random latitude
+                key: 'lon' (str); value: (float) - a random longitude
+        """
         lon, lat = random.uniform(-180,180), random.uniform(-90, 90)
         return {"lat": lat, "lon": lon}
 
-    def test_many_random_routes(self):
-        for x in range(20):
-            self.test_random_route()
-            time.sleep(0.25)
-
 
 def do_all_tests():
-    """This method does a test"""
+    """Function sets up an instance of the class TestRoute, and does the basic
+    tests."""
     test_route = TestRoute()
     test_route.setup()
     test_route.test_length_calculation()
     test_route.test_bootstrap_route_length()
     test_route.test_calculate_longest_route_for_today()
     test_route.test_calculate_longest_route_for_past_day()
-    test_route.test_many_random_routes()
+    test_route.test_random_route()
 
 if __name__ == "__main__":
     do_all_tests()

@@ -1,32 +1,36 @@
 # -*- coding: utf-8 -*-
 """Scripts for Postgres.
 
-This module demonstrates documentation as specified by the `Google Python
-Style Guide`_. Docstrings may extend over multiple lines. Sections are created
-with a section header and a colon followed by a block of indented text.
-
-Example:
-    Examples can be given using either the ``Example`` or ``Examples``
-    sections. Sections support any reStructuredText formatting, including
-    literal blocks::
-
-        $ python example_google.py
-
-Section breaks are created by resuming unindented text. Section breaks
-are also implicitly created anytime a new section starts.
+This module provides scripts for querying the service's postgres sql database.
+All member variables are strings. Some member variables require formatting by
+the calling function from models.py
 
 Attributes:
-    module_level_variable1 (int): Module level variables may be documented in
-        either the ``Attributes`` section of the module docstring, or in an
-        inline docstring immediately following the variable.
-
-        Either form is acceptable, but the two should not be mixed. Choose
-        one convention to document module level variables and be consistent
-        with it.
-
-Todo:
-    * For module TODOs
-    * You have to also use ``sphinx.ext.todo`` extension
+    CREATE_DB (str): format with the database name
+    DB_EXISTS (str): format with the database name
+    ADD_POSTGIS_TO_DB (str): no format required, however postgis must be
+        installed
+    DROP_DB (str): format with the database name
+    TABLE_EXISTS (str): format with the table name
+    DROP_TABLE (str): format with the table name
+    CREATE_ROUTE_TABLE (str): no format required, specific for the service
+    ADD_GEOM_COLUMN_TO_TABLE (str): format with the table name, requires postgis
+        is activated by ADD_POSTGIS_TO_DB script.
+    CREATE_ROUTE_LEN_TABLE (str): no format required, specific for the service
+    GET_NEW_ROUTE_ID (str): no format required, specific for the service
+        route_lengths table
+    START_NEW_ROUTE (str): format with the new route_id
+    ROUTE_ID_EXISTS (str): format with the route_id to check if exists
+    UPDATE_ROUTE (str): format with (route_id, longitude, latitude)
+    SELECT_ALL (str): format with the table name
+    SINGLE_ROUTE_LENGTH (str): format with the route_id to query for its length
+    UPDATE_ROUTE_LENGTH (str): format with the (route_length, route_id)
+    UPDATE_DAYS_ROUTE_LENGTH (str): format with a string "%Y-%m-%d"
+    LONGEST_ROUTE_IN_DAY (str): format with the a string "%Y-%m-%d"
+    CHECK_ORIGIN_TIME (str): format with a route_id
+    ADD_TRANSACTION_ROW_1 (str): no format required, specific for the service
+    ADD_TRANSACTION_ROW_0 (str): no format required, specific for the service
+    ADD_TRANSACTION_ROW_2 (str): no format required, specific for the service
 
 """
 
@@ -89,7 +93,7 @@ SELECT_ALL = "SELECT * FROM {};"
 SINGLE_ROUTE_LENGTH = """
     SELECT sum(route_length) *.001 as km from (
         SELECT
-        ST_DistanceSphere(geom, lag(geom, 1) OVER (ORDER BY timestamp)) as   route_length
+        ST_DistanceSphere(geom, lag(geom, 1) OVER (ORDER BY timestamp)) as route_length
         FROM routes
         WHERE route_id = {}
     ) as route_length_table;
@@ -99,7 +103,7 @@ UPDATE_ROUTE_LENGTH = """
     UPDATE route_lengths SET route_length = {} WHERE route_id = {};
 """
 
-UPDATE_DAYS_ROUTE_LENGTH """
+UPDATE_DAYS_ROUTE_LENGTH = """
     with new_values as (
        SELECT route_id, sum(km) as total_km
         FROM
