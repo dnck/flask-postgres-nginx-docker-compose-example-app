@@ -128,9 +128,7 @@ def add_way_point(route_id):
     coordinates = request.get_json()
     assert "lat" in coordinates
     assert "lon" in coordinates
-    _update_route(route_id, coordinates["lon"], coordinates["lat"])
-    return "OK", 201
-
+    return _update_route(route_id, coordinates["lon"], coordinates["lat"])
 
 def _update_route(route_id, longitude, latitude):
     """
@@ -140,10 +138,11 @@ def _update_route(route_id, longitude, latitude):
     conn, cur = models.execute_pgscript(
         models.querys.ROUTE_ID_EXISTS.format(route_id)
     )
-    result_id_exists = cur.fetchone()
+    route_id_exists = cur.fetchone()
     models.close_and_commit(cur, conn)
-    if not result_id_exists:
+    if not route_id_exists:
         return json.dumps({"Error": "route_id does not exist!"}), 404
+
     older_than_today = is_origin_time_older_than_today(route_id)
     if older_than_today:
         LOG.debug("Caught exception: The user can not add more data points.")
@@ -160,7 +159,7 @@ def _update_route(route_id, longitude, latitude):
     )
     LOG.debug("Updating the route of id {}".format(route_id))
     models.close_and_commit(cur, conn)
-    return "OK", 201
+    return json.dumps({"Ok": "Updated waypoint for route_id".format(route_id)}), 201
 
 
 def is_origin_time_older_than_today(route_id):

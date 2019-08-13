@@ -36,7 +36,8 @@ docker volumes prune
 
 1. **Persist useful data for servicing requests!**
 
-  Currently, the service uses an in-memory cache of recently requested dates for the user's longest route query. If the node fails, however, it may lose relevant data for servicing new requests. Persist all lengths from longest day query in the database.
+  Currently, the service uses an in-memory cache of recently requested dates for the user's longest route query. If the node fails, however, it may lose relevant data for servicing new requests. Persist all lengths from longest day query in the database. The query.UPDATE_ALL_ROUTES_IN_DAY_LENGTH already
+  has this query written out.
 
 2. **CONSIDER CHANGING:**
 

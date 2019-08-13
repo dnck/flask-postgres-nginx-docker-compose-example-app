@@ -5,6 +5,12 @@ This module provides scripts for querying the service's postgres sql database.
 All member variables are strings. Some member variables require formatting by
 the calling function from models.py
 
+Example:
+    $ import querys
+    $ querys.CREATE_DB.format('planet')
+    $ querys.ADD_POSTGIS_TO_DB
+    $ querys.UPDATE_ROUTE_LENGTH.format(0, 1234.5678)
+
 Attributes:
     CREATE_DB (str): format with the database name
     DB_EXISTS (str): format with the database name
@@ -25,7 +31,7 @@ Attributes:
     SELECT_ALL (str): format with the table name
     SINGLE_ROUTE_LENGTH (str): format with the route_id to query for its length
     UPDATE_ROUTE_LENGTH (str): format with the (route_length, route_id)
-    UPDATE_DAYS_ROUTE_LENGTH (str): format with a string "%Y-%m-%d"
+    UPDATE_ALL_ROUTES_IN_DAY_LENGTH (str): format with a string "%Y-%m-%d"
     LONGEST_ROUTE_IN_DAY (str): format with the a string "%Y-%m-%d"
     CHECK_ORIGIN_TIME (str): format with a route_id
     ADD_TRANSACTION_ROW_1 (str): no format required, specific for the service
@@ -103,7 +109,7 @@ UPDATE_ROUTE_LENGTH = """
     UPDATE route_lengths SET route_length = {} WHERE route_id = {};
 """
 
-UPDATE_DAYS_ROUTE_LENGTH = """
+UPDATE_ALL_ROUTES_IN_DAY_LENGTH = """
     with new_values as (
        SELECT route_id, sum(km) as total_km
         FROM

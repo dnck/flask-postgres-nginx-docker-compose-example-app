@@ -53,7 +53,10 @@ class TestRoute():
         """
         Bootstraps the database with its first past-day record and afterwards,
         creates a new route_id for today, adds the waypoints from instance variable
-        wgs84_coordinates, finally querys for the new route_ids length.
+        wgs84_coordinates, and finally querys for the new route_ids length.
+
+        This method can be run multiple times without over-writing the db,
+        thanks to the checks in the models.initialize_db() method.
         """
         bootstrap_msg = requests.post(BOOTSTRAP_ENDPOINT, json={"key": SECRET_KEY})
         route_id = self.start_new_route()
@@ -98,6 +101,22 @@ class TestRoute():
         route_len = route_len.json()
         return route_len
 
+    def test_get_unkown_route_id_length(self):
+        """
+        Nothing was specified in the user description for the service for requests
+        for lengths of unknown route_ids.
+        """
+        unknown = self._get_route_id_length(999999)
+        assert unknown['km'] == None
+
+    def test_add_waypoint_to_stale_route(self):
+        result = requests.post(
+            ROUTE_ADD_WAY_POINT_ENDPOINT.format(0),
+            json={"lat": 52.520008, "lon": 13.404954}#Berlin
+        )
+        reponse = result.json()
+        assert "Error" in reponse.keys()
+
     def test_calculate_longest_route_for_today(self):
         """Test that the longest route for query date of today returns an Error
         per the service definitions:
@@ -128,24 +147,30 @@ class TestRoute():
             assert response.status_code in [403, 404]
             assert query_result["Error"] in acceptable_error_messages
         else:
-            assert "km" in query_result.keys()
+            assert type(query_result['km']) == float
 
-    #TODO needs assertions
+    #TODO needs refactoring into seperate methods
     def test_random_route(self):
         """
-        Randomly requests a new route_id and adds waypoints,
+        Randomly requests a new route_id to be made and adds waypoints,
         or attempts to add waypoints to an existing route_id.
+
+        If the route_id does not exist, we check that the response contains
+        a helpful error message.
         """
         func = random.choice([self._random_route_id, self.start_new_route])
         route_id = func()
-        for x in range(random.randint(1, 20)):
+        for x in range(random.randint(1, 10)):
             coordinates = self._random_lon_lat()
             response = requests.post(
                 ROUTE_ADD_WAY_POINT_ENDPOINT.format(route_id), json=coordinates
             )
-            time.sleep(0.25)
-        route_len = self._get_route_id_length(route_id)
-        print(route_len)
+            time.sleep(0.1)
+        if not response.status_code == 404:
+            route_len = self._get_route_id_length(route_id)
+            assert type(route_len['km']) == float
+        else:
+            assert("Error" in response.json().keys())
 
     def _random_route_id(self):
         """Helper function for test_random_route
@@ -177,6 +202,8 @@ def do_all_tests():
     test_route.test_calculate_longest_route_for_today()
     test_route.test_calculate_longest_route_for_past_day()
     test_route.test_random_route()
+    test_route.test_get_unkown_route_id_length()
+    test_route.test_add_waypoint_to_stale_route()
 
 if __name__ == "__main__":
     do_all_tests()
