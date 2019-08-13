@@ -40,10 +40,10 @@ import querys
 TODAY = datetime.datetime.now().strftime("%m-%d-%Y")
 
 PERSISTENCE_PROVIDER = "postgres"
-DB_HOST = "db"
+DB_HOST = "localhost" # TODO change back to docker-compose container name db
 DB_PORT = 5432
 DB_USER = "postgres"
-DB_PASS = "password"
+DB_PASS = "entropy09" # TODO change back to password
 DB_NAME = "planet"
 
 def create_new_database():

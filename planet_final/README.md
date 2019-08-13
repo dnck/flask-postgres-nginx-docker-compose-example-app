@@ -32,11 +32,19 @@ And if you wish,
 docker volumes prune
 ```
 
-## TODO
-1. The service is vulnerable to attacks. An attack can add new way points to today's on-going routes simply by passing an integer route_id to the endpoint for updating waypoints. Although convenient during development, int data types should not be used for the route_ids.
+## ISSUES
+1. **Fix site vulnerabilities!**
 
-2. Currently, the service uses an in-memory cache of recently requested dates for the longest route query. These are not persisted, but they should be, because in the event of failure, the node could resume serving queries quickly.
+  An attack can add new way points to today's on-going routes simply by passing an ``` <int> route_id``` to the endpoint for updating waypoints. Although convenient during development, ```<int>``` data types should not be used for the route_ids. Switch back to hashing.
 
-3. The service is currently using postgis Geometry types for coordinate storage. Depending on the degree of precision required by the user in terms of length calculations, the service could change to using Geography types instead.
+3. **On that note, add https:// reverse proxy support to the running containers.**
 
-4. 
+  The reverse proxy can handle the traffic to the replicas in the service cluster, essentially playing a load-balancing role for the cluster. This can be configured with nginx.
+
+2. **Persist useful data for servicing requests!**
+
+  Currently, the service uses an in-memory cache of recently requested dates for the user's longest route query. If the node fails, however, it may lose relevant data for servicing new requests. Persist all lengths from longest day query in the database.
+
+4. **CONSIDER CHANGING:**
+
+  The service is currently using postgis Geometry types for coordinate storage. Depending on the degree of precision required by the user in terms of length calculations, the service could change to using Geography data types instead.

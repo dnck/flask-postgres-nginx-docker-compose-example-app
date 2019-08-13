@@ -49,7 +49,7 @@ LONGEST_ROUTE_IN_DAY_CACHE = {"1984-01-28": [0, 833.77]}
 
 @APP.route("/initialize_db/", methods=["POST"])
 def initialize_db():
-   """Example function with types documented in the docstring.
+    """Example function with types documented in the docstring.
 
     `PEP 484`_ type annotations are supported. If attribute, parameter, and
     return types are annotated according to `PEP 484`_, they do not need to be
@@ -133,9 +133,16 @@ def add_way_point(route_id):
 
 def _update_route(route_id, longitude, latitude):
     """
-    If the user tries to update an old route,
+    If the user tries to update an stale route (older than 1 day),
         then they receive a 403 response with a helpful message for debugging.
     """
+    conn, cur = models.execute_pgscript(
+        models.querys.ROUTE_ID_EXISTS.format(route_id)
+    )
+    result_id_exists = cur.fetchone()
+    models.close_and_commit(cur, conn)
+    if not result_id_exists:
+        return json.dumps({"Error": "route_id does not exist!"}), 404
     older_than_today = is_origin_time_older_than_today(route_id)
     if older_than_today:
         LOG.debug("Caught exception: The user can not add more data points.")

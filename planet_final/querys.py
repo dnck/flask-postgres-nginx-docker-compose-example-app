@@ -44,7 +44,7 @@ ADD_POSTGIS_TO_DB = "CREATE EXTENSION IF NOT EXISTS postgis;"
 DROP_DB = "DROP DATABASE IF EXISTS {};"
 
 TABLE_EXISTS = """
-    SELECT exists(SELECT relname FROM pg_class WHERE relname='{}';)
+    SELECT exists(SELECT relname FROM pg_class WHERE relname='{}');
 """
 
 DROP_TABLE = """DROP TABLE IF EXISTS {};"""
@@ -75,6 +75,10 @@ START_NEW_ROUTE = """
     VALUES ({}, now(),  0.00);
 """
 
+ROUTE_ID_EXISTS = """
+    SELECT route_id FROM route_lengths WHERE route_id = {} LIMIT 1;
+"""
+
 UPDATE_ROUTE = """
     INSERT INTO routes (route_id, timestamp, geom)
     VALUES ({}, now(), 'SRID=4326; POINT({} {})');
@@ -93,6 +97,25 @@ SINGLE_ROUTE_LENGTH = """
 
 UPDATE_ROUTE_LENGTH = """
     UPDATE route_lengths SET route_length = {} WHERE route_id = {};
+"""
+
+UPDATE_DAYS_ROUTE_LENGTH """
+    with new_values as (
+       SELECT route_id, sum(km) as total_km
+        FROM
+        	(SELECT route_id, km as km
+        	 FROM (
+        		SELECT route_id, ST_DistanceSphere(geom, lag(geom, 1) OVER (partition by route_id ORDER BY timestamp)) / 1000 as km
+        		FROM routes
+        	 	WHERE timestamp BETWEEN '{}' and '{}'::date + interval '24 hours'
+        	 ) as route_length_table)
+        	as table_two
+        group by route_id
+    )
+    UPDATE route_lengths rl
+      set route_length = new_values.total_km
+    from new_values
+    where new_values.route_id = rl.route_id;
 """
 
 LONGEST_ROUTE_IN_DAY = """
