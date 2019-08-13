@@ -32,11 +32,13 @@ LONGEST_ROUTE_IN_DAY_CACHE = {"1984-01-28": [0, 833.77]}
 
 @APP.route("/initialize_db/", methods=["POST"])
 def initialize_db():
-    """Bootstraps the database using the models.initialize_db() method.
+    """bootstrap_endpoint
+
+    Bootstraps the database using the models.initialize_db() method.
 
     Returns:
-        201 response code - success
-        500 response code - failure
+        dict, 201 response code: success
+        dict, 500 response code: failure
 
     """
     secret_key = request.get_json()
@@ -55,7 +57,8 @@ def initialize_db():
 
 @APP.route("/route/", methods=["POST"])
 def create_route():
-    """
+    """route_endpoint
+
     >> The service accepts data from a GPS tracker device.
     >> In the beginning of a track, the service requests a route to be created...
     """
@@ -76,7 +79,7 @@ def _create_route():
 
     Returns:
         dict
-            key: 'route_id' (str); value: (int) - new route id
+            'route_id' (str): route_id (int)
     """
     conn, cur = models.execute_pgscript(models.querys.GET_NEW_ROUTE_ID)
     new_route_id = cur.fetchone()
@@ -93,7 +96,8 @@ def _create_route():
 
 @APP.route("/route/<int:route_id>/way_point/", methods=["POST"])
 def add_way_point(route_id):
-    """
+    """route_add_way_point_endpoint
+
     >> It continuously populates the route with data points (WGS84 coordinates).
     >> A route is expected to be done within a day.
     >> After a day, the user can not add more data points.
@@ -102,9 +106,9 @@ def add_way_point(route_id):
         route_id (int): A route_id supplied by the user in the POST
 
     Returns:
-        201 response code - success
-        404 response code - if the route_id does not exist in the route_lengths table
-        403 response code - if the creation time of the route_id is older than today
+        dict, 201 response code:
+        dict, 404 response code: if the route_id does not exist in the dict, route_lengths table
+        dict, 403 response code: if the creation time of the route_id is older than today
     """
     coordinates = request.get_json()
     assert "lat" in coordinates
@@ -123,16 +127,16 @@ def _update_route(route_id, longitude, latitude):
         latitude (float): the latitude supplied by the user in the POST
 
     Returns:
-        201 response code - success
-        404 response code - if the route_id does not exist in the route_lengths table
-        403 response code - if the creation time of the route_id is older than today
+        dict, 201 response code: success
+        dict, 404 response code: if the route_id does not exist in the route_lengths table
+        dict, 403 response code: if the creation time of the route_id is older than today
 
     """
     route_id_exists = _route_id_exists(route_id)
     if not route_id_exists:
         return json.dumps({"Error": "route_id does not exist!"}), 404
 
-    older_than_today = is_origin_time_older_than_today(route_id)
+    older_than_today = _is_origin_time_older_than_today(route_id)
     if older_than_today:
         LOG.debug("Caught exception: The user can not add more data points.")
         return (
@@ -168,7 +172,7 @@ def _route_id_exists(route_id):
     return True
 
 
-def is_origin_time_older_than_today(route_id):
+def _is_origin_time_older_than_today(route_id):
     """A check that prevent updating waypoints for route_ids that are stale
 
     Args:
@@ -176,7 +180,7 @@ def is_origin_time_older_than_today(route_id):
 
     Returns:
         bool:
-            True if the route_id was created in a previous day
+            True if the route_id was created in a previous day,
             False otherwise
     """
     conn, cur = models.execute_pgscript(
@@ -185,13 +189,13 @@ def is_origin_time_older_than_today(route_id):
     creation_time = cur.fetchone()
     models.close_and_commit(cur, conn)
     creation_time = creation_time[0].strftime("%Y-%m-%d")
-    older_than_today = is_query_date_older_than_today(creation_time)
+    older_than_today = _is_query_date_older_than_today(creation_time)
     return older_than_today
 
 
 @APP.route("/route/<int:route_id>/length/")
 def calculate_length(route_id):
-    """Route length endpoint
+    """route_length_endpoint
 
     >> Eventually a request to get the length of the route is made.'
 
@@ -202,8 +206,8 @@ def calculate_length(route_id):
         route_id (int): A route_id supplied by the user in a POST
 
     Returns:
-        201 response code - success
-        404 response code - if the route_id has no waypoints
+        dict, 201 response code: success
+        dict, 404 response code: if the route_id has no waypoints
     """
     route_id_has_waypoints = _route_id_has_waypoints(route_id)
     # LOG.debug("Route {} has waypoints = {}".format(route_id, route_id_has_waypoints))
@@ -227,7 +231,7 @@ def _get_length_of_single_route(route_id):
         route_id (int): A route_id supplied by the user in a POST
 
     Returns:
-        length_of_route (float) - length (km) of route_id
+        length_of_route (float): length (km) of route_id
     """
     LOG.debug("Finding the length of route_id = {}".format(route_id))
     conn, cur = models.execute_pgscript(
@@ -246,7 +250,7 @@ def _route_id_has_waypoints(route_id):
 
     Returns:
         bool:
-            True if the route_id has waypoints in the routes table
+            True if the route_id has waypoints in the routes table;
             False otherwise
 
     """
@@ -262,7 +266,8 @@ def _route_id_has_waypoints(route_id):
 
 @APP.route("/longest-route/<string:query_date>")
 def calculate_longest_route_for_day(query_date):
-    """
+    """route_longest_route_in_day_endpoint
+
     >> There is also a second part of the challenge which is to calculate
     >> the longest path for each day.
     >> past days can't have new routes included,
@@ -272,11 +277,11 @@ def calculate_longest_route_for_day(query_date):
         query_date (str): in the form of %Y-%m-%d
 
     Returns:
-        (dict, 201 response code): if there were waypoints for query_date older than today
-        (dict, 403 response code): if the route_id was created today
-        (dict, 404 response code): if there are no waypoints for query_date
+        dict, 201 response code: if there were waypoints for query_date older than today
+        dict, 403 response code): if the route_id was created today
+        dict, 404 response code: if there are no waypoints for query_date
     """
-    if query_date_is_in_cache(query_date):
+    if _query_date_is_in_cache(query_date):
         return (
             json.dumps(
                 {
@@ -287,7 +292,7 @@ def calculate_longest_route_for_day(query_date):
             ),
             201,
         )
-    query_older_than_today = is_query_date_older_than_today(query_date)
+    query_older_than_today = _is_query_date_older_than_today(query_date)
     if not query_older_than_today:
         return (
             json.dumps({"Error": "The request will only query days in the past."}),
@@ -303,7 +308,7 @@ def calculate_longest_route_for_day(query_date):
     longest_route_in_a_day = cur.fetchone()
     models.close_and_commit(cur, conn)
     if longest_route_in_a_day:
-        update_long_route_cache(query_date, longest_route_in_a_day)
+        _update_long_route_cache(query_date, longest_route_in_a_day)
         return (
             json.dumps(
                 {
@@ -318,7 +323,7 @@ def calculate_longest_route_for_day(query_date):
     return (json.dumps({"Error": "No routes recorded for {}".format(query_date)}), 404)
 
 
-def query_date_is_in_cache(query_date):
+def _query_date_is_in_cache(query_date):
     """A simple check that the query date is in the check
 
     Args:
@@ -328,28 +333,32 @@ def query_date_is_in_cache(query_date):
     return query_date in LONGEST_ROUTE_IN_DAY_CACHE
 
 
-def update_long_route_cache(query_date, longest_route_in_a_day):
+def _update_long_route_cache(query_date, longest_route_in_a_day):
     """
     >> This information is expected to be highly requested
     If the query date was not in the cache, we update the cache with this
     new information.
 
     Args:
-        query_date (str): in the form of %Y-%m-%d
+        query_date (str): %Y-%m-%d format
+
         longest_route_in_a_day (dict):
-            key (str) 'date': val (str) - date for which the route_id is the longest
-            key (str) 'route_id': val (int) - id of route
-            key (str) 'km': val (float) - length in km of route
+            e.g.
+            {
+            'date' (str): val (str) - date for which the route_id is the longest,
+            'route_id': val (int) - id of route,
+            'km' (str): val (float) - length in km of route
+             }
     """
     LONGEST_ROUTE_IN_DAY_CACHE.update(
         {query_date: [longest_route_in_a_day[0], longest_route_in_a_day[1]]}
     )
 
 
-def is_query_date_older_than_today(query_date):
+def _is_query_date_older_than_today(query_date):
     """A check that prevents longest route querys for the current day.
 
-    >> the request will only query days in the past'
+    >> the request will only query days in the past
 
     Returns:
         bool: True if the query_date is not today, false otherwise

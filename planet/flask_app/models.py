@@ -19,8 +19,7 @@ DB_NAME = "planet"
 
 
 def create_new_database():
-    """Example function with types documented in the docstring.
-
+    """
     Creates a database DB_NAME (module constant) using the default constants.
 
     Returns:

@@ -113,7 +113,7 @@ SINGLE_ROUTE_LENGTH = """
 UPDATE_ROUTE_LENGTH = """
     UPDATE route_lengths SET route_length = {} WHERE route_id = {};
 """
-
+# TODO - NOT IN USE, REMOVE AFTER SEPT 2019
 UPDATE_ALL_ROUTES_IN_DAY_LENGTH = """
     with new_values as (
        SELECT route_id, sum(km) as total_km

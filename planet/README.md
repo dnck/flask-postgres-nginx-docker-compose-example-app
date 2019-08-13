@@ -4,7 +4,7 @@ With docker-compose:
 ```
 docker-compose up
 ```
-The service is available for development on localhost:5000. It uses uWSGI as an http server for flask and nginx as the user proxy.
+The service is available for development on localhost:5000. It uses uWSGI as an http server for flask and nginx as the user proxy. You can visit the endpoints in your browser, or use the enclosed integration test.
 
 The service accepts POST requests to create a new ```route_id```, and update existing waypoints for a route_id.
 
