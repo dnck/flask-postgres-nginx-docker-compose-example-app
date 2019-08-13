@@ -172,16 +172,17 @@ class TestRoute(unittest.TestCase):
         to traffic.
         """
         route_id = self._start_new_route()
-
-        for _ in range(random.randint(1, 10)):
+        new_random_route_id = random.randint(1, int(route_id))
+        for _ in range(random.randint(1, 1000)):
             coordinates = self._random_lon_lat()
             response = requests.post(
-                ROUTE_ADD_WAY_POINT_ENDPOINT.format(route_id), json=coordinates
+                ROUTE_ADD_WAY_POINT_ENDPOINT.format(new_random_route_id),
+                json=coordinates
             )
-            time.sleep(0.1)
+            time.sleep(0.05)
 
         if not response.status_code in [404, 403]:
-            route_len = self._get_route_id_length(route_id)
+            route_len = self._get_route_id_length(new_random_route_id)
             self.assertTrue(isinstance(route_len["km"], float))
         else:
             self.assertTrue("Error" in response.json().keys())
