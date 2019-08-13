@@ -2,9 +2,9 @@
 """Flask app for accepting GPS tracking data.
 
 The service.py here adheres to the user story defined in the project
-root ./README_USER_STORE.md file. For this reason, we repeat certain lines
+root ./README_USER_STORY.md file. For this reason, we repeat certain lines
 from the user-story within this service to mark out how the user demands
-map to code. Lines from the user-story are preceeded by the > symbol
+map to code. Lines from the user-story are annotated with >>.
 
 Example:
     It is best to just use docker-compose from the parent directory.
@@ -22,7 +22,7 @@ from flask.logging import create_logger
 import models
 
 logging.basicConfig(level=logging.DEBUG)
-# > The application is a small service.
+# >> The application is a small service.
 APP = Flask(__name__)
 LOG = create_logger(APP)
 SECRET = "hello-planet-labs"
@@ -56,8 +56,8 @@ def initialize_db():
 @APP.route("/route/", methods=["POST"])
 def create_route():
     """
-    > The service accepts data from a GPS tracker device.
-    > In the beginning of a track, the service requests a route to be created...
+    >> The service accepts data from a GPS tracker device.
+    >> In the beginning of a track, the service requests a route to be created...
     """
     LOG.debug("New route_id requested.")
     new_route = _create_route()
@@ -94,9 +94,9 @@ def _create_route():
 @APP.route("/route/<int:route_id>/way_point/", methods=["POST"])
 def add_way_point(route_id):
     """
-    > It continuously populates the route with data points (WGS84 coordinates).
-    > A route is expected to be done within a day.
-    > After a day, the user can not add more data points.
+    >> It continuously populates the route with data points (WGS84 coordinates).
+    >> A route is expected to be done within a day.
+    >> After a day, the user can not add more data points.
 
     Args:
         route_id (int): A route_id supplied by the user in the POST
@@ -193,7 +193,7 @@ def is_origin_time_older_than_today(route_id):
 def calculate_length(route_id):
     """Route length endpoint
 
-    > Eventually a request to get the length of the route is made.'
+    >> Eventually a request to get the length of the route is made.'
 
     "Eventually" is ambiguous, so we allow for queries on the length of a
     route that is still in progress.
@@ -206,11 +206,14 @@ def calculate_length(route_id):
         404 response code - if the route_id has no waypoints
     """
     route_id_has_waypoints = _route_id_has_waypoints(route_id)
-    #LOG.debug("Route {} has waypoints = {}".format(route_id, route_id_has_waypoints))
+    # LOG.debug("Route {} has waypoints = {}".format(route_id, route_id_has_waypoints))
     if not route_id_has_waypoints:
-        return json.dumps(
-            {"Error": "route_id {} has not added any waypoints".format(route_id)}
-        ), 404
+        return (
+            json.dumps(
+                {"Error": "route_id {} has not added any waypoints".format(route_id)}
+            ),
+            404,
+        )
     length_of_route = _get_length_of_single_route(route_id)
     return json.dumps({"route_id": route_id, "km": length_of_route[0]}), 201
 
@@ -260,10 +263,10 @@ def _route_id_has_waypoints(route_id):
 @APP.route("/longest-route/<string:query_date>")
 def calculate_longest_route_for_day(query_date):
     """
-    > There is also a second part of the challenge which is to calculate
-    > the longest path for each day.
-    > past days can't have new routes included,
-    > nor new points added to routes from past days.
+    >> There is also a second part of the challenge which is to calculate
+    >> the longest path for each day.
+    >> past days can't have new routes included,
+    >> nor new points added to routes from past days.
 
     Args:
         query_date (str): in the form of %Y-%m-%d
@@ -327,7 +330,7 @@ def query_date_is_in_cache(query_date):
 
 def update_long_route_cache(query_date, longest_route_in_a_day):
     """
-    > This information is expected to be highly requested
+    >> This information is expected to be highly requested
     If the query date was not in the cache, we update the cache with this
     new information.
 
@@ -346,7 +349,7 @@ def update_long_route_cache(query_date, longest_route_in_a_day):
 def is_query_date_older_than_today(query_date):
     """A check that prevents longest route querys for the current day.
 
-    > the request will only query days in the past'
+    >> the request will only query days in the past'
 
     Returns:
         bool: True if the query_date is not today, false otherwise

@@ -4,13 +4,11 @@
 models.py is imported by the service.py Flask application.
 
 """
-import datetime
 
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 import querys
-
 
 PERSISTENCE_PROVIDER = "postgres"
 DB_HOST = "db"
