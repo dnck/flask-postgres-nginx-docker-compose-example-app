@@ -82,15 +82,21 @@ class TestRoute():
         created by the setup method.
         """
         length = self.length_get.json()
+        print(length)
         assert 11750 < length["km"] < 11900
 
     def test_bootstrap_route_length(self):
         """
         Test that the bootstrap route is within the given interval.
         """
-        bootstrap_len = requests.get(ROUTE_LENGTH_ENDPOINT.format(0))
-        bootstrap_len = bootstrap_len.json()
+        bootstrap_len = self._get_route_id_length(0)
+        print(bootstrap_len)
         assert 800 < bootstrap_len["km"] < 850
+
+    def _get_route_id_length(self, route_id):
+        route_len = requests.get(ROUTE_LENGTH_ENDPOINT.format(route_id))
+        route_len = route_len.json()
+        return route_len
 
     def test_calculate_longest_route_for_today(self):
         """Test that the longest route for query date of today returns an Error
@@ -101,6 +107,7 @@ class TestRoute():
         response = requests.get(ROUTE_LONGEST_ROUTE_IN_DAY_ENDPOINT.format(query_date))
         assert response.status_code == 403
         query_result = response.json()
+        print(query_result)
         assert query_result["Error"] == "The request will only query days in the past."
 
     def test_calculate_longest_route_for_past_day(self):
@@ -112,6 +119,7 @@ class TestRoute():
         query_date = "1984-01-28"
         response = requests.get(ROUTE_LONGEST_ROUTE_IN_DAY_ENDPOINT.format(query_date))
         query_result = response.json()
+        print(query_result)
         acceptable_error_messages = [
             "The request will only query days in the past.",
             "No routes recorded for {}".format(query_date),
@@ -136,6 +144,8 @@ class TestRoute():
                 ROUTE_ADD_WAY_POINT_ENDPOINT.format(route_id), json=coordinates
             )
             time.sleep(0.25)
+        route_len = self._get_route_id_length(route_id)
+        print(route_len)
 
     def _random_route_id(self):
         """Helper function for test_random_route

@@ -33,18 +33,11 @@ docker volumes prune
 ```
 
 ## ISSUES
-1. **Fix site vulnerabilities!**
 
-  An attack can add new way points to today's on-going routes simply by passing an ``` <int> route_id``` to the endpoint for updating waypoints. Although convenient during development, ```<int>``` data types should not be used for the route_ids. Switch back to hashing.
-
-3. **On that note, add https:// reverse proxy support to the running containers.**
-
-  The reverse proxy can handle the traffic to the replicas in the service cluster, essentially playing a load-balancing role for the cluster. This can be configured with nginx.
-
-2. **Persist useful data for servicing requests!**
+1. **Persist useful data for servicing requests!**
 
   Currently, the service uses an in-memory cache of recently requested dates for the user's longest route query. If the node fails, however, it may lose relevant data for servicing new requests. Persist all lengths from longest day query in the database.
 
-4. **CONSIDER CHANGING:**
+2. **CONSIDER CHANGING:**
 
   The service is currently using postgis Geometry types for coordinate storage. Depending on the degree of precision required by the user in terms of length calculations, the service could change to using Geography data types instead.
