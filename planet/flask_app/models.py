@@ -19,6 +19,7 @@ DB_USER = "postgres"
 DB_PASS = "password"
 DB_NAME = "planet"
 
+
 def create_new_database():
     """Example function with types documented in the docstring.
 
@@ -164,8 +165,7 @@ def table_exists(table_name):
     """
     exists = False
     try:
-        conn, cur = \
-            execute_pgscript(querys.TABLE_EXISTS.format(table_name))
+        conn, cur = execute_pgscript(querys.TABLE_EXISTS.format(table_name))
         exists = cur.fetchone()[0]
     except psycopg2.Error as err:
         close_and_commit(cur, conn)
@@ -222,6 +222,7 @@ def close_and_commit(cur, conn):
     cur.close()
     conn.commit()
     conn.close()
+
 
 def initialize_db():
     """Initialize the database and tables

@@ -27,6 +27,7 @@ Attributes:
         route_lengths table
     START_NEW_ROUTE (str): format with the new route_id
     ROUTE_ID_EXISTS (str): format with the route_id to check if exists
+    ROUTE_ID_HAS_WAYPOINTS (str): format with the route_id to check if it has waypoints
     UPDATE_ROUTE (str): format with (route_id, longitude, latitude)
     SELECT_ALL (str): format with the table name
     SINGLE_ROUTE_LENGTH (str): format with the route_id to query for its length
@@ -87,6 +88,10 @@ START_NEW_ROUTE = """
 
 ROUTE_ID_EXISTS = """
     SELECT route_id FROM route_lengths WHERE route_id = {} LIMIT 1;
+"""
+
+ROUTE_ID_HAS_WAYPOINTS = """
+    SELECT route_id FROM routes WHERE route_id = {} LIMIT 1;
 """
 
 UPDATE_ROUTE = """

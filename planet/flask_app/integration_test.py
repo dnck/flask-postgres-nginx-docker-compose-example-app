@@ -39,7 +39,7 @@ ROUTE_LONGEST_ROUTE_IN_DAY_ENDPOINT = "{}longest-route/{}".format(
 )
 
 
-class TestRoute():
+class TestRoute:
     """Class for testing the service from a client perspective"""
 
     wgs84_coordinates = [
@@ -107,12 +107,12 @@ class TestRoute():
         for lengths of unknown route_ids.
         """
         unknown = self._get_route_id_length(999999)
-        assert unknown['km'] == None
+        assert unknown["km"] == None
 
     def test_add_waypoint_to_stale_route(self):
         result = requests.post(
             ROUTE_ADD_WAY_POINT_ENDPOINT.format(0),
-            json={"lat": 52.520008, "lon": 13.404954}#Berlin
+            json={"lat": 52.520008, "lon": 13.404954},  # Berlin
         )
         reponse = result.json()
         assert "Error" in reponse.keys()
@@ -147,9 +147,9 @@ class TestRoute():
             assert response.status_code in [403, 404]
             assert query_result["Error"] in acceptable_error_messages
         else:
-            assert type(query_result['km']) == float
+            assert type(query_result["km"]) == float
 
-    #TODO needs refactoring into seperate methods
+    # TODO needs refactoring into seperate methods
     def test_random_route(self):
         """
         Randomly requests a new route_id to be made and adds waypoints,
@@ -168,9 +168,9 @@ class TestRoute():
             time.sleep(0.1)
         if not response.status_code == 404:
             route_len = self._get_route_id_length(route_id)
-            assert type(route_len['km']) == float
+            assert type(route_len["km"]) == float
         else:
-            assert("Error" in response.json().keys())
+            assert "Error" in response.json().keys()
 
     def _random_route_id(self):
         """Helper function for test_random_route
@@ -188,7 +188,7 @@ class TestRoute():
                 key: 'lat' (str); value: (float) - a random latitude
                 key: 'lon' (str); value: (float) - a random longitude
         """
-        lon, lat = random.uniform(-180,180), random.uniform(-90, 90)
+        lon, lat = random.uniform(-180, 180), random.uniform(-90, 90)
         return {"lat": lat, "lon": lon}
 
 
@@ -204,6 +204,7 @@ def do_all_tests():
     test_route.test_random_route()
     test_route.test_get_unkown_route_id_length()
     test_route.test_add_waypoint_to_stale_route()
+
 
 if __name__ == "__main__":
     do_all_tests()
