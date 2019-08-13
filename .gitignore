@@ -105,3 +105,4 @@ venv.bak/
 
 #
 /backend-developer-test-master
+.DS_Store
