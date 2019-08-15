@@ -74,6 +74,7 @@ class TestRoute(unittest.TestCase):
         Assertions kept in tact.
         """
         route_id = self._start_new_route()
+        print("Route id: ", route_id)
         self._push_route(route_id)
         length_get = requests.get(ROUTE_LENGTH_ENDPOINT.format(route_id))
         length = length_get.json()
@@ -168,15 +169,14 @@ class TestRoute(unittest.TestCase):
 
     def test_add_many_waypoints(self):
         """
-        A basic test that can be extended to measure the services tolerance
+        A basic test that can be extended to measure the service's tolerance
         to traffic.
         """
         route_id = self._start_new_route()
-        new_random_route_id = random.randint(1, int(route_id))
-        for _ in range(random.randint(1, 1000)):
+        for _ in range(random.randint(1, 10)):
             coordinates = self._random_lon_lat()
             response = requests.post(
-                ROUTE_ADD_WAY_POINT_ENDPOINT.format(new_random_route_id),
+                ROUTE_ADD_WAY_POINT_ENDPOINT.format(route_id),
                 json=coordinates
             )
             time.sleep(0.05)
