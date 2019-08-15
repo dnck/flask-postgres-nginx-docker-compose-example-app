@@ -155,7 +155,7 @@ def route_id_has_waypoints(route_id):
         return False
     return True
 
-def some_function():
+def query_longest_route_in_day():
     conn, cur = models.execute_pgscript(
         models.querys.LONGEST_ROUTE_IN_DAY.format(query_date, query_date)
     )

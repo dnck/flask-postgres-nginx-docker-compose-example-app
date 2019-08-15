@@ -158,8 +158,8 @@ def calculate_longest_route_for_day(query_date):
             json.dumps({"Error": "The request will only query days in the past."}),
             403,
         )
-
-    longest_route_in_a_day = controller.some_function() # This is db lookuo #2
+    # This is db lookuo #2
+    longest_route_in_a_day = controller.query_longest_route_in_day()
 
     if longest_route_in_a_day:
         controller.update_long_route_cache(query_date, longest_route_in_a_day)
