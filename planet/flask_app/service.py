@@ -15,18 +15,24 @@ Example:
 import datetime
 import json
 import logging
+import sys
 
 from flask import Flask, request
-from flask.logging import create_logger
 
 import controller
 import models
 
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%m/%d/%Y %I:%M:%S %p",
+)
 
 # >> The application is a small service.
 APP = Flask(__name__)
-logging.basicConfig(level=logging.DEBUG)
-LOG = create_logger(APP)
+
+
 SECRET = "hello-planet-labs"
 
 
@@ -48,12 +54,12 @@ def initialize_db():
         routes_table_exists = models.table_exists("routes")
         route_lengths_exists = models.table_exists("route_lengths")
         assert exists == routes_table_exists == route_lengths_exists
-        LOG.info("PostGres DB with tables is online.")
+        APP.logger.info("PostGres DB with tables is online.")
         return (
             json.dumps({"Success!": "PostGres DB with postgis extensions is created."}),
             201,
         )
-    LOG.warn("Error! Failed to initialize the db.")
+    APP.logger.warn("Error! Failed to initialize the db.")
     return json.dumps({"Error": "Failed to initialize the db"}), 500
 
 
@@ -64,9 +70,9 @@ def create_route():
     >> The service accepts data from a GPS tracker device.
     >> In the beginning of a track, the service requests a route to be created...
     """
-    LOG.debug("New route_id requested.")
+    APP.logger.debug("New route_id requested.")
     new_route = controller.create_route()
-    LOG.debug("New route_id assigned: %s.", new_route)
+    APP.logger.debug("New route_id assigned: %s.", new_route)
     return json.dumps(new_route), 201
 
 

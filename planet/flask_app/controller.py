@@ -2,8 +2,15 @@ import logging
 import json
 import models
 import datetime
+import sys
 
-logging.basicConfig(level=logging.DEBUG)
+
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%m/%d/%Y %I:%M:%S %p",
+)
 
 LONGEST_ROUTE_IN_DAY_CACHE = {"1984-01-28": [0, 833.77]}
 
@@ -58,8 +65,21 @@ def update_route(route_id, longitude, latitude):
         return json.dumps({"Error": "route_id does not exist!"}), 404
 
     older_than_today = is_origin_time_older_than_today(route_id)
+    # Is this a kind of window function?
     if older_than_today:
         logging.debug("Error: You can not add more data points to this object.")
+        # When we find that there are requests coming in from the previous
+        # day, we should then trigger the update all routes in day
+        # script. For each update request that comes in, we will waste
+        # our computational power if we do the update. We just need to
+        # be certain that we have triggered this call once, and that is
+        # at the time of transition from yesterday to today.
+        # See also: query_longest_route_in_day()
+        conn, cur = models.execute_pgscript(
+            models.querys.UPDATE_ALL_ROUTES_IN_DAY_LENGTH.format(
+                yesterday(), yesterday()
+            )
+        )
         return (
             json.dumps(
                 {
@@ -156,6 +176,48 @@ def route_id_has_waypoints(route_id):
     return True
 
 def query_longest_route_in_day():
+    # TODO:
+    # We will have made this code obsolete if we can place a gaurantee
+    # that all records for past days have been calculated accurately and
+    # and stored as a result of keeping track of each day's balances.
+    # Instead, if there is a request for the longest route in the day,
+    # we can give it to them quickly from the stored result in ram, or in
+    # the database.
+    # We should have better tables
+    # We should have one table that maps from date to route id for servicing
+    # requests for the longest route of a day
+    # and one table that maps from the route_id to its length
+    # And then we have also, the route_id and their waypoints
+
+    # 1. Final_length_table
+    # |route_id||final_length|
+    # Fourth, routes are assigned a final length.
+
+    # 2. Longest_route_of_day_table
+    # |date||route_id|
+    # Third, we calculate the lengths of finalized routes.
+    # At the end of the day, some routes may still be in progress.
+    # If so, they will trigger the service to update the previous days
+    # calculations for route lengths. The server currently uses a 24 hour
+    # period / window over which to compute the sum of waypoints for routes
+    # from the previous day. This window is fixed, but we could make it a
+    # sliding window so that we are always computing the previous 24 hours
+    # for waypoints and never computing the sum of waypoints that were created
+    # more than 24 hours ago as we now are.
+
+    # 3. Waypoint_table
+    # |route_id||waypoint|
+    # Second, new routes log waypoints.
+    # We allow fresh routes to update themselves with new waypoints.
+    # Fresh routes are defined as routes that have had their IDs assigned
+    # today as defined by the server clock.
+
+    # 4. Creation_time_table
+    # |route_id||time|
+    # New routes come through here first.
+    # We respond to them by starting a record in the table.
+
+    # So those are the final tables I really need.
     conn, cur = models.execute_pgscript(
         models.querys.LONGEST_ROUTE_IN_DAY.format(query_date, query_date)
     )
@@ -195,6 +257,10 @@ def update_long_route_cache(query_date, longest_route_in_a_day):
         {query_date: [longest_route_in_a_day[0], longest_route_in_a_day[1]]}
     )
 
+def yesterday():
+    return datetime.date.fromordinal(
+                datetime.date.today().toordinal()-1
+            ).strftime("%F")
 
 def is_query_date_older_than_today(query_date):
     """A check that prevents longest route querys for the current day.
