@@ -24,7 +24,9 @@ def create_route():
     conn, cur = models.execute_pgscript(models.querys.GET_NEW_ROUTE_ID)
     new_route_id = cur.fetchone()
     if str(new_route_id[0]) == "None":
-        logging.info("Our first track on route_id 0!")
+        logging.info( # This check is essential to the test
+            "Our first track on route_id 0!" # The body of the condition
+            ) # should only ever execute after the first zero transaction.
         cur.execute(models.querys.START_NEW_ROUTE.format(0))
         models.close_and_commit(cur, conn)
         return {"route_id": 0}

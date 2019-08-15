@@ -173,10 +173,11 @@ class TestRoute(unittest.TestCase):
         to traffic.
         """
         route_id = self._start_new_route()
+        new_random_route_id = random.randint(1, int(route_id))
         for _ in range(random.randint(1, 10)):
             coordinates = self._random_lon_lat()
             response = requests.post(
-                ROUTE_ADD_WAY_POINT_ENDPOINT.format(route_id),
+                ROUTE_ADD_WAY_POINT_ENDPOINT.format(new_random_route_id),
                 json=coordinates
             )
             time.sleep(0.05)
