@@ -2,7 +2,7 @@
 """This module is provided as a client-server integration test.
 
 Example:
-    After the Flask app defined in service.py is running,
+    After the Flask app defined in views.py is running,
 
         $ python integration_test.py
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """models.py contains basic psycopg2 scripts for interacting with the db.
 
-models.py is imported by the service.py Flask application.
+models.py is imported by the views.py Flask application.
 
 """
 
