@@ -1,14 +1,14 @@
 ### Background  
-This is an toy Flask app that can accept data from a GPS tracker device. It is not meant for production, but to showcase a Flask app.
+This is a toy app that shows how to combine several services with docker-compose to create a Flask app to accept fake gps data from a device.
 
-A device can request a new route to be created, and then continuously populate its route with data points, which are stored as WGS84 coordinates.
+The hypothetical device can request a new route to be created. It can then continuously populate its route with data points, which are stored as WGS84 coordinates in a postgres db with postgis enabled.
 
 Each route is expected to be done within a day. A day is defined by the server.
 
-After a day end, the device can NOT add more data points. It must request a new ID for a new route.
+After the day end, the device can NOT add more data points. It must request a new ID for a new route if it wishes to continue adding coordinates.
 
 Anyone can request the length of a route, and also the ID of the longest route
-for a given day. While a request for the longest route in a day can only query days in the past, the length of a route can be made for any route ID.
+for a given day. However, while the length of a route can be made for any route ID, a request for the longest route in a day can only query days in the past.
 
 
 # Usage
