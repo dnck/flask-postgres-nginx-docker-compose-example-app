@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+
+  db:
+    image: geographica/postgis:dev_diplodocus
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWD=password
+    networks:
+      - db_nw
+
+  flask_app:
+    build: ./flask_app/
+    networks:
+      - db_nw
+      - web_nw
+    depends_on:
+      - db
+
+  nginx:
+    restart: always
+    build: ./nginx/
+    ports:
+      - "5000:80"
+    networks:
+      - web_nw
+    depends_on:
+      - flask_app
+
+networks:
+  db_nw:
+    driver: bridge
+  web_nw:
+    driver: bridge
