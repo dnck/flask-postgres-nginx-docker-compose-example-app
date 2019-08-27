@@ -104,5 +104,5 @@ venv.bak/
 .mypy_cache/
 
 #
-/backend-developer-test-master
 .DS_Store
+.zip
